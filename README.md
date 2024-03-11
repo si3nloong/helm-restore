@@ -26,6 +26,14 @@ brew install helm-restore
 go install github.com/si3nloong/helm-restore@main
 ```
 
+## 🥢 How to use?
+
+```bash
+helm-restore --latest -o dist
+```
+
+This will take some time if you have many charts. After it complete, you will see your charts inside `dist` folder.
+
 ## ⚙️ Command line tool
 
 ### Syntax

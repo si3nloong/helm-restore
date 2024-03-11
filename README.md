@@ -14,13 +14,13 @@ Having faced the same challenges, I developed this tool to simplify the process 
 
 ## 🔨 Installation
 
-### Brew
+<!-- ### Brew
 
 ```console
 brew install helm-restore
 ```
 
-### Go
+### Go -->
 
 ```console
 go install github.com/si3nloong/helm-restore@main

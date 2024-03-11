@@ -19,12 +19,17 @@ Having faced the same challenges, I developed this tool to simplify the process 
 ```console
 brew install helm-restore
 ```
+-->
 
-### Go -->
+### Go
 
 ```console
 go install github.com/si3nloong/helm-restore@main
 ```
+
+### Distribution
+
+[Downloads](https://github.com/si3nloong/helm-restore/releases/tag/v1.0.0)
 
 ## 🥢 How to use?
 

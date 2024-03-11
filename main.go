@@ -8,12 +8,15 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 	"sigs.k8s.io/yaml"
@@ -56,34 +59,27 @@ type HelmChartTemplate struct {
 	Namespace string `json:"namespace"`
 }
 
-func base64Decode(v []byte) ([]byte, error) {
-	b64 := make([]byte, base64.StdEncoding.DecodedLen(len(v)))
-	n, err := base64.StdEncoding.Decode(b64, v)
-	if err != nil {
-		return nil, err
-	}
-	return b64[:n], nil
-}
-
 type cmdOpts struct {
-	kubeConfig string
-	cluster    string
-	outDir     string
+	kubeConfig     string
+	clusterContext string
+	outDir         string
+	latest         bool
 }
 
 // https://devops.stackexchange.com/questions/4344/original-helm-chart-gone-how-can-i-find-get-it-from-the-cluster/17642#17642?newreg=b1f82da562c445b086a171eb8397f33b
 func main() {
 	var opts cmdOpts
-	opts.kubeConfig = filepath.Join(homedir.HomeDir(), ".kube", "config")
 
 	flag.StringVar(&opts.outDir, "o", ".", "Destination folder (output)")
-	flag.StringVar(&opts.cluster, "cluster", "", "Cluster name")
+	flag.StringVar(&opts.kubeConfig, "f", filepath.Join(homedir.HomeDir(), ".kube", "config"), "Kubernetes config file")
+	flag.StringVar(&opts.clusterContext, "context", "", "Cluster context name")
+	flag.BoolVar(&opts.latest, "latest", false, "Latest helm chart only")
 	flag.Parse()
 
 	os.MkdirAll(opts.outDir, os.ModePerm)
 
 	if err := rootCommand(opts); err != nil {
-		panic(err.Error())
+		log.Fatal(err)
 	}
 }
 
@@ -91,16 +87,26 @@ func rootCommand(opts cmdOpts) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	config, err := clientcmd.BuildConfigFromFlags("", opts.kubeConfig)
-	if err != nil {
-		return err
-	}
+	var (
+		config *rest.Config
+		err    error
+	)
 
-	// clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-	// 	&clientcmd.ClientConfigLoadingRules{ExplicitPath: ""},
-	// 	&clientcmd.ConfigOverrides{
-	// 		CurrentContext: opts.cluster,
-	// 	}).ClientConfig()
+	if opts.clusterContext != "" {
+		config, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+			&clientcmd.ClientConfigLoadingRules{ExplicitPath: opts.kubeConfig},
+			&clientcmd.ConfigOverrides{
+				CurrentContext: opts.clusterContext,
+			}).ClientConfig()
+		if err != nil {
+			return err
+		}
+	} else {
+		config, err = clientcmd.BuildConfigFromFlags("", opts.kubeConfig)
+		if err != nil {
+			return err
+		}
+	}
 
 	// Creates the clientset
 	clientset, err := kubernetes.NewForConfig(config)
@@ -145,6 +151,15 @@ func rootCommand(opts cmdOpts) error {
 		rootDir := filepath.Join(opts.outDir, secret.Name)
 		os.MkdirAll(rootDir, os.ModePerm)
 
+		if opts.latest {
+			lastIdx := strings.LastIndex(secret.Name, ".")
+			version, _ := strconv.Atoi(secret.Name[lastIdx+2:])
+			prevVersionDir := filepath.Join(opts.outDir, secret.Name[:lastIdx+2]+strconv.Itoa(version-1))
+			if _, err := os.Stat(prevVersionDir); !os.IsNotExist(err) {
+				os.RemoveAll(prevVersionDir)
+			}
+		}
+
 		// Creating `Chart.yaml`
 		{
 			mb, err := yaml.JSONToYAML(chart.Chart.Metadata)
@@ -157,6 +172,7 @@ func rootCommand(opts cmdOpts) error {
 				return err
 			}
 			defer f.Close()
+
 			f.Write(mb)
 			f.Close()
 		}
@@ -190,6 +206,7 @@ func rootCommand(opts cmdOpts) error {
 			defer f.Close()
 
 			f.Write(b)
+			f.Close()
 		}
 
 		for _, tmpl := range chart.Chart.Files {
@@ -203,9 +220,19 @@ func rootCommand(opts cmdOpts) error {
 			defer f.Close()
 
 			f.Write(b)
+			f.Close()
 		}
 
 		secrets.Items = secrets.Items[1:]
 	}
 	return nil
+}
+
+func base64Decode(v []byte) ([]byte, error) {
+	b64 := make([]byte, base64.StdEncoding.DecodedLen(len(v)))
+	n, err := base64.StdEncoding.Decode(b64, v)
+	if err != nil {
+		return nil, err
+	}
+	return b64[:n], nil
 }

@@ -14,12 +14,11 @@ Having faced the same challenges, I developed this tool to simplify the process 
 
 ## 🔨 Installation
 
-<!-- ### Brew
+### Brew
 
 ```console
 brew install helm-restore
 ```
--->
 
 ### Go
 

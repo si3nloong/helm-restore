@@ -17,6 +17,7 @@ Having faced the same challenges, I developed this tool to simplify the process 
 ### Brew
 
 ```console
+brew tap si3nloong/tools
 brew install helm-restore
 ```
 

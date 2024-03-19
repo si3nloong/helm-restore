@@ -38,6 +38,15 @@ archives:
       - goos: windows
         format: zip
 
+brews:
+  - name: helm-restore
+    tap:
+      owner: si3nloong
+      name: homebrew-helm-restore
+    folder: Formula
+    homepage: https://github.com/si3nloong/helm-restore
+    description: A CLI to restore your helm charts
+
 changelog:
   sort: asc
   filters:

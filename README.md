@@ -1,6 +1,6 @@
 # helm-restore
 
-> An CLI to restore your helm charts. As long as your kubernetes cluster is available, you can restore the helm chart using `helm-restore` CLI.
+> A CLI to restore your helm charts. As long as your kubernetes cluster is available, you can restore the helm chart using `helm-restore` CLI.
 
 ## ❓ Why `helm-restore`?
 

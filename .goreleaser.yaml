@@ -40,9 +40,9 @@ archives:
 
 brews:
   - name: helm-restore
-    tap:
+    repository:
       owner: si3nloong
-      name: homebrew-helm-restore
+      name: homebrew-tools
     folder: Formula
     homepage: https://github.com/si3nloong/helm-restore
     description: A CLI to restore your helm charts

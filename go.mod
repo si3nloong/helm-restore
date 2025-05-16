@@ -1,10 +1,11 @@
 module github.com/si3nloong/helm-restore
 
-go 1.22.0
+go 1.24.0
+
 toolchain go1.24.1
 
 require (
-	k8s.io/apimachinery v0.33.0
+	k8s.io/apimachinery v0.33.1
 	k8s.io/client-go v0.33.0
 	sigs.k8s.io/yaml v1.4.0
 )
